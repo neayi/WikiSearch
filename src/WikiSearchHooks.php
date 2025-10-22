@@ -31,7 +31,6 @@ use MediaWiki\Revision\RevisionRecord;
 use MWException;
 use OutputPage;
 use Parser;
-use PPFrame;
 use Skin;
 use SMW\PropertyRegistry;
 use SMW\SemanticData;
@@ -155,7 +154,7 @@ abstract class WikiSearchHooks {
 	 */
 	public static function onParserFirstCallInit( Parser $parser ) {
 		try {
-			$parser->setFunctionHook( "wikisearchconfig", [ self::class, "searchConfigCallback" ], Parser::SFH_OBJECT_ARGS );
+			$parser->setFunctionHook( "wikisearchconfig", [ self::class, "searchConfigCallback" ] );
 			$parser->setFunctionHook( "wikisearchfrontend", [ self::class, "searchEngineFrontendCallback" ] );
 			$parser->setFunctionHook( "prop_values", [ new PropertyValuesParserFunction(), "execute" ] );
 
@@ -285,13 +284,12 @@ abstract class WikiSearchHooks {
 	 * appropriate SearchEngineConfig object and for storing that object in the database.
 	 *
 	 * @param Parser $parser
-	 * @param PPFrame $frame
-	 * @param array $args
+	 * @param string ...$parameters
 	 * @return string
 	 */
-	public static function searchConfigCallback( Parser $parser, PPFrame $frame, array $args ): string {
+	public static function searchConfigCallback( Parser $parser, string ...$parameters ): string {
 		try {
-			$config = SearchEngineConfig::newFromParameters( $parser, $frame, $args );
+			$config = SearchEngineConfig::newFromParameters( $parser->getTitle(), $parameters );
 		} catch ( \InvalidArgumentException $exception ) {
 			Logger::getLogger()->alert( 'Caught exception while creating SearchEngineConfig: {e}', [
 				'e' => $exception
