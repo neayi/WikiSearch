@@ -104,9 +104,13 @@ abstract class WikiSearchHooks {
 		$original_revision_id,
 		$undid_revision_id
 	) {
-		// Delete any "searchEngineConfig"'s on this page
-		SearchEngineConfig::delete( self::getPrimaryDB(), $article->getId() );
-
+		// Instead of immediate delete/reparse
+		\DeferredUpdates::addCallableUpdate( function () use ( $article, $main_content ) {
+			// Ensure this runs after SMW processing
+			SearchEngineConfig::delete( self::getPrimaryDB(), $article->getId() );
+			// Reparse content
+		});
+		
 		// Create an appropriate parser
 		$parser = MediaWikiServices::getInstance()->getParser();
 		$parser->mOptions = $parser->getOptions() ?? \ParserOptions::newFromUserAndLang(
