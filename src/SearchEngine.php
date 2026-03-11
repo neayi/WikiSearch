@@ -155,14 +155,14 @@ class SearchEngine {
                 $lastSearchTerms = [$lastSearchTerms];
             }
 
-            if ( array_diff( $lastSearchTerms, $this->search_terms ) !== [] ) {
-                foreach ( $this->search_terms as $search_term ) {
-                    WikiSearchServices::getSearchHistoryStore()->pushHistory( $search_term );
-                }
+            $newSearchTerms = array_diff( $this->search_terms , $lastSearchTerms );
 
-                $session->set( self::WIKISEARCH_LAST_SEARCH_TERMS_SESSION_KEY, $this->search_terms );
-                $session->persist();
+            foreach ( $newSearchTerms as $search_term ) {
+                WikiSearchServices::getSearchHistoryStore()->pushHistory( $search_term );
             }
+
+            $session->set( self::WIKISEARCH_LAST_SEARCH_TERMS_SESSION_KEY, $this->search_terms );
+            $session->persist();
         }
 
 		return [

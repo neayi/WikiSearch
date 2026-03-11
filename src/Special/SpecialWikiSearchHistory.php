@@ -2,14 +2,11 @@
 
 namespace WikiSearch\Special;
 
-use HTMLForm;
-use MediaWiki\MediaWikiServices;
 use MediaWiki\Parser\ParserOutput;
 use OOUI\ButtonGroupWidget;
 use OOUI\ButtonWidget;
 use PermissionsError;
 use SpecialPage;
-use Status;
 use WikiSearch\SearchHistoryStore;
 use WikiSearch\WikiSearchServices;
 
@@ -47,7 +44,7 @@ class SpecialWikiSearchHistory extends SpecialPage {
 
         $pout = new ParserOutput;
         $pout->addModuleStyles( [ 'oojs-ui.styles.icons-movement' ] );
-        $pout->setText( wfMessage( 'wikisearch-view-history-intro' )->parse() . $table . $navigationBar );
+        $pout->setRawText( wfMessage( 'wikisearch-view-history-intro' )->parse() . $table . $navigationBar );
 
         return $pout;
     }
@@ -152,7 +149,13 @@ class SpecialWikiSearchHistory extends SpecialPage {
         return $wikitext;
     }
 
-    private function formatQuery( string $query ) {
+    /**
+     * Format the given search query to be showable in the UI.
+     *
+     * @param string $query
+     * @return string
+     */
+    private function formatQuery( string $query ): string {
         if ( $query === "" ) {
             return "<i>" . $this->msg( 'wikisearch-empty-string' )->text() . "</i>";
         }
