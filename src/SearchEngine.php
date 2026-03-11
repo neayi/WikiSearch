@@ -25,9 +25,8 @@ use Elastic\Elasticsearch\Client;
 use Elastic\Elasticsearch\ClientBuilder;
 use Elastic\Elasticsearch\Exception\AuthenticationException;
 use Exception;
-use MediaWiki\HookContainer\HookContainer;
 use MediaWiki\MediaWikiServices;
-
+use RequestContext;
 use WikiSearch\QueryEngine\Factory\QueryEngineFactory;
 use WikiSearch\QueryEngine\Filter\QueryPreparationTrait;
 use WikiSearch\QueryEngine\Filter\SearchTermFilter;
@@ -41,6 +40,8 @@ use WikiSearch\QueryEngine\QueryEngine;
 class SearchEngine {
     use QueryPreparationTrait;
 
+    private const WIKISEARCH_LAST_SEARCH_TERMS_SESSION_KEY = 'wikisearch_last_search_term';
+
 	/**
 	 * @var SearchEngineConfig
 	 */
@@ -50,6 +51,11 @@ class SearchEngine {
 	 * @var QueryEngine
 	 */
 	private QueryEngine $query_engine;
+
+    /**
+     * @var string[]
+     */
+    private array $search_terms = [];
 
 	/**
 	 * Search constructor.
@@ -112,6 +118,8 @@ class SearchEngine {
 	 * @param string $search_term
 	 */
 	public function addSearchTerm( string $search_term ) {
+        $this->search_terms[] = $search_term;
+
 		$search_term_filter = new SearchTermFilter(
 			$this->prepareQuery( $search_term ),
 			$this->config->getSearchParameter( "search term properties" ) ?: null,
@@ -134,6 +142,26 @@ class SearchEngine {
 
 		$results = $this->doQuery( $elastic_query );
 		$results = $this->applyResultTranslations( $results );
+
+        $enableSearchHistory = MediaWikiServices::getInstance()->getMainConfig()->get( 'WikiSearchEnableSearchHistory' );
+
+        if ( $enableSearchHistory ) {
+            $session = RequestContext::getMain()->getRequest()->getSession();
+            $lastSearchTerms = $session->get( self::WIKISEARCH_LAST_SEARCH_TERMS_SESSION_KEY, [] );
+
+            if ( !is_array( $lastSearchTerms ) ) {
+                $lastSearchTerms = [$lastSearchTerms];
+            }
+
+            $newSearchTerms = array_diff( $this->search_terms , $lastSearchTerms );
+
+            foreach ( $newSearchTerms as $search_term ) {
+                WikiSearchServices::getSearchHistoryStore()->pushHistory( $search_term );
+            }
+
+            $session->set( self::WIKISEARCH_LAST_SEARCH_TERMS_SESSION_KEY, $this->search_terms );
+            $session->persist();
+        }
 
 		return [
 			"hits"  => json_encode( $results["hits"]["hits"] ?? [] ),
