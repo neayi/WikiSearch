@@ -83,7 +83,7 @@ class SpecialWikiSearchHistory extends SpecialPage {
             $types['prev'] = max( $offset - $limit, 0 );
         }
 
-        if ( $offset + $limit < $this->searchHistoryStore->getAggregationCountByConds( [] ) ) {
+        if ( $offset + $limit < $this->searchHistoryStore->getAggregationCount() ) {
             $types['next'] = $offset + $limit;
         }
 

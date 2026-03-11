@@ -2,8 +2,6 @@
 
 namespace WikiSearch;
 
-use MediaWiki\Context\RequestContext;
-use MediaWiki\Session\Session;
 use Wikimedia\Rdbms\IDatabase;
 use Wikimedia\Rdbms\IResultWrapper;
 
@@ -51,15 +49,7 @@ class SearchHistoryStore {
         );
     }
 
-    public function getHistoryCountByConds( array $conds ): int {
-        // return $this->dbReplica->estimateRowCount( [self::HISTORY_TABLE_NAME], 'search_history_id', $conds, __METHOD__ );
-
-        return $this->getHistoryByConds( [] )->count();
-    }
-
-    public function getAggregationCountByConds( array $conds ): int {
-        // return $this->dbReplica->estimateRowCount( self::AGGREGATE_TABLE_NAME, '*', $conds, __METHOD__ );
-
+    public function getAggregationCount(): int {
         return $this->getAggregationsByConds( [] )->count();
     }
 

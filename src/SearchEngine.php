@@ -25,9 +25,7 @@ use Elastic\Elasticsearch\Client;
 use Elastic\Elasticsearch\ClientBuilder;
 use Elastic\Elasticsearch\Exception\AuthenticationException;
 use Exception;
-use MediaWiki\HookContainer\HookContainer;
 use MediaWiki\MediaWikiServices;
-
 use RequestContext;
 use WikiSearch\QueryEngine\Factory\QueryEngineFactory;
 use WikiSearch\QueryEngine\Filter\QueryPreparationTrait;
