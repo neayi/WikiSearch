@@ -28,6 +28,7 @@ use Exception;
 use MediaWiki\HookContainer\HookContainer;
 use MediaWiki\MediaWikiServices;
 
+use RequestContext;
 use WikiSearch\QueryEngine\Factory\QueryEngineFactory;
 use WikiSearch\QueryEngine\Filter\QueryPreparationTrait;
 use WikiSearch\QueryEngine\Filter\SearchTermFilter;
@@ -40,6 +41,8 @@ use WikiSearch\QueryEngine\QueryEngine;
  */
 class SearchEngine {
     use QueryPreparationTrait;
+
+    private const WIKISEARCH_LAST_SEARCH_TERMS_SESSION_KEY = 'wikisearch_last_search_term';
 
 	/**
 	 * @var SearchEngineConfig
@@ -145,8 +148,20 @@ class SearchEngine {
         $enableSearchHistory = MediaWikiServices::getInstance()->getMainConfig()->get( 'WikiSearchEnableSearchHistory' );
 
         if ( $enableSearchHistory ) {
-            foreach ( $this->search_terms as $search_term ) {
-                WikiSearchServices::getSearchHistoryStore()->pushHistory( $search_term );
+            $session = RequestContext::getMain()->getRequest()->getSession();
+            $lastSearchTerms = $session->get( self::WIKISEARCH_LAST_SEARCH_TERMS_SESSION_KEY, [] );
+
+            if ( !is_array( $lastSearchTerms ) ) {
+                $lastSearchTerms = [$lastSearchTerms];
+            }
+
+            if ( array_diff( $lastSearchTerms, $this->search_terms ) !== [] ) {
+                foreach ( $this->search_terms as $search_term ) {
+                    WikiSearchServices::getSearchHistoryStore()->pushHistory( $search_term );
+                }
+
+                $session->set( self::WIKISEARCH_LAST_SEARCH_TERMS_SESSION_KEY, $this->search_terms );
+                $session->persist();
             }
         }
 

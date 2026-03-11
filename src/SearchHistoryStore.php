@@ -2,6 +2,8 @@
 
 namespace WikiSearch;
 
+use MediaWiki\Context\RequestContext;
+use MediaWiki\Session\Session;
 use Wikimedia\Rdbms\IDatabase;
 use Wikimedia\Rdbms\IResultWrapper;
 
