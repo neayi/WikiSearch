@@ -3,6 +3,7 @@
 namespace WikiSearch\QueryEngine\Filter;
 
 use ONGR\ElasticsearchDSL\Query\Compound\BoolQuery;
+use ONGR\ElasticsearchDSL\Query\FullText\MatchPhraseQuery;
 use ONGR\ElasticsearchDSL\Query\FullText\QueryStringQuery;
 use WikiSearch\SMW\PropertyFieldMapper;
 
@@ -18,8 +19,10 @@ class SearchTermFilter extends AbstractFilter {
 	private array $fields = [
 		"subject.title.search^8",
 		"subject.title^8",
+		"subject.title.folded^8",
 		"text_copy.search^5",
 		"text_copy^5",
+		"text_copy.folded^5",
 		"text_raw.search",
 		"text_raw",
 		"attachment.title^3",
@@ -57,6 +60,9 @@ class SearchTermFilter extends AbstractFilter {
                 if ( $field->hasSearchSubfield() ) {
                     $this->fields[] = $field->getWeightedSearchField();
                 }
+                if ( $field->hasFoldedSubfield() ) {
+                    $this->fields[] = $field->getWeightedFoldedField();
+                }
             }
         }
 	}
@@ -84,6 +90,15 @@ class SearchTermFilter extends AbstractFilter {
 			] );
 
 			$boolQuery->add( $queryStringQuery, BoolQuery::SHOULD );
+		}
+
+		// Wildcard queries produce constant scores in ElasticSearch. Add a high-boost phrase match
+		// on the title so that exact title matches rank first. The folded subfield ensures that
+		// accent-insensitive searches (e.g. "paturage" vs "pâturage") also benefit from the boost.
+		if ( preg_match( '/^(\*[^*\s]+\*\s*)+$/', trim( $this->searchTerm ) ) ) {
+			$plainTerm = trim( str_replace( '*', '', $this->searchTerm ) );
+			$boolQuery->add( new MatchPhraseQuery( 'subject.title', $plainTerm, [ 'boost' => 100 ] ), BoolQuery::SHOULD );
+			$boolQuery->add( new MatchPhraseQuery( 'subject.title.folded', $plainTerm, [ 'boost' => 100 ] ), BoolQuery::SHOULD );
 		}
 
 		return $boolQuery;

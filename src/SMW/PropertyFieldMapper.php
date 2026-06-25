@@ -75,6 +75,12 @@ class PropertyFieldMapper {
 	// List of internal properties that have a search subfield
 	public const SEARCH_INTERNAL_PROPERTIES = [ "text_raw", "text_copy", "subject.title" ];
 
+	// List of field types that have a folded (accent-insensitive) subfield
+	public const FOLDED_FIELD_TYPES = [ "txt" ];
+
+	// List of internal properties that have a folded (accent-insensitive) subfield
+	public const FOLDED_INTERNAL_PROPERTIES = [ "text_copy", "subject.title" ];
+
 	// List of internal properties that support fast vector highlighting
 	public const FVH_INTERNAL_PROPERTIES = [ "noop", "text_copy", "text_raw", "subject.title", "subject.interwiki", "subject.subobject", "subject.sortkey", "subject.rev_id" ];
 
@@ -262,6 +268,37 @@ class PropertyFieldMapper {
 	 */
 	public function getWeightedSearchField(): string {
 		return sprintf( "%s^%d", $this->getSearchField(), $this->property_weight );
+	}
+
+	/**
+	 * Returns the folded (accent-insensitive) subfield associated with this property.
+	 *
+	 * @return string
+	 */
+	public function getFoldedField(): string {
+		return sprintf( "%s.folded", $this->getPropertyField() );
+	}
+
+	/**
+	 * Returns the folded subfield associated with this property, with the weight.
+	 *
+	 * @return string
+	 */
+	public function getWeightedFoldedField(): string {
+		return sprintf( "%s^%d", $this->getFoldedField(), $this->property_weight );
+	}
+
+	/**
+	 * Returns true if and only if this property has a folded (accent-insensitive) subfield.
+	 *
+	 * @return bool
+	 */
+	public function hasFoldedSubfield(): bool {
+		if ( $this->isInternalProperty() ) {
+			return in_array( $this->property_key, self::FOLDED_INTERNAL_PROPERTIES, true );
+		} else {
+			return in_array( $this->property_field_type, self::FOLDED_FIELD_TYPES, true );
+		}
 	}
 
 	/**
