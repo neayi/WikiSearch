@@ -252,7 +252,11 @@ class QueryEngine {
 			return;
 		}
 
-		$this->baseQuery = $query[0];
+		// $query is SMW\Elastic\QueryEngine\ConditionBuilder's sequential "elastic"
+		// query info array: its earlier entries are per-condition debug fragments,
+		// and the last entry is always the fully combined, ready-to-use query
+		// (with the "index"/"body.query" shape QueryCombinator expects).
+		$this->baseQuery = end( $query );
 	}
 
 	/**
