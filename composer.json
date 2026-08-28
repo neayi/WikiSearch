@@ -33,6 +33,9 @@
         "allow-plugins": {
             "composer/installers": true,
             "php-http/discovery": true
+        },
+        "audit": {
+            "block-insecure": false
         }
     }
 }
